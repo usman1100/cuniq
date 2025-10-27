@@ -18,7 +18,7 @@ fn main() {
         Ok(data) => data,
         Err(err) => panic!("{}", err),
     };
-    let reader = BufReader::new(file);
+    let reader = BufReader::with_capacity(1024 * 1024, file);
     let mut lines = reader.lines();
 
     let head = match lines.next() {
