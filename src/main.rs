@@ -50,18 +50,15 @@ fn main() {
             Ok(data) => data,
             Err(_err) => continue,
         };
-        let cells_iter = cells_string.trim().split(",");
-        let cells: Vec<String> = cells_iter.map(|i| i.to_string()).collect();
 
-        let cell_value = match cells.get(search_index) {
-            Some(data) => data,
-            None => continue,
-        };
+        if let Some(cell_value) = cells_string.split(",").nth(search_index) {
+            let cell_value = cell_value.trim();
 
-        match counter.get(cell_value) {
-            Some(data) => counter.insert(cell_value.to_string(), data + 1),
-            None => counter.insert(cell_value.to_string(), 0),
-        };
+            counter
+                .entry(cell_value.to_string())
+                .and_modify(|count| *count += 1)
+                .or_insert(1);
+        }
     }
 
     println!("{:?}", counter);
