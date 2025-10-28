@@ -16,6 +16,12 @@ struct Args {
     input: String,
 }
 
+fn print_counter(counter: HashMap<String, u32>) -> () {
+    for (key, value) in counter {
+        println!("{},{}", key, value)
+    }
+}
+
 fn main() {
     let args = Args::parse();
     let column = args.column;
@@ -71,4 +77,6 @@ fn main() {
                 .or_insert(1);
         }
     }
+    println!("{},count", column);
+    print_counter(counter);
 }
