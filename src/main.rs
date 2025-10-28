@@ -9,12 +9,16 @@ use std::{
 #[command(version, about, long_about = None)]
 struct Args {
     #[arg(short, long)]
-    function: String,
+    column: String,
+
+    #[arg(short, long)]
+    input: String,
 }
 
 fn main() {
     let args = Args::parse();
-    let file = match File::open("./data.csv") {
+    let column = args.column;
+    let file = match File::open(args.input) {
         Ok(data) => data,
         Err(err) => panic!("{}", err),
     };
@@ -34,9 +38,9 @@ fn main() {
     let columns_iter = column_string.trim().split(",");
     let columns: Vec<String> = columns_iter.map(|s| s.to_string()).collect();
 
-    let search_index = match columns.iter().position(|i| i == &"UNITPRICE") {
+    let search_index = match columns.iter().position(|i| i == &column) {
         Some(data) => data,
-        None => panic!("UNITPRICE header not found"),
+        None => panic!("{} header not found", column),
     };
 
     if columns.is_empty() {
@@ -60,7 +64,4 @@ fn main() {
                 .or_insert(1);
         }
     }
-
-    println!("{:?}", counter);
-    println!("{}", args.function);
 }
