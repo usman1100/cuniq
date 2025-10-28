@@ -3,6 +3,7 @@ use std::{
     collections::HashMap,
     fs::File,
     io::{BufRead, BufReader},
+    process::exit,
 };
 
 #[derive(Parser, Debug)]
@@ -32,7 +33,10 @@ fn main() {
 
     let column_string = match head {
         Ok(data) => data,
-        Err(err) => panic!("{}", err),
+        Err(err) => {
+            eprintln!("{}", err);
+            exit(1);
+        }
     };
 
     let columns_iter = column_string.trim().split(",");
@@ -40,7 +44,10 @@ fn main() {
 
     let search_index = match columns.iter().position(|i| i == &column) {
         Some(data) => data,
-        None => panic!("{} header not found", column),
+        None => {
+            eprintln!("column {} not found", column);
+            exit(1);
+        }
     };
 
     if columns.is_empty() {
