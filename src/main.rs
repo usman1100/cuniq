@@ -7,15 +7,38 @@ use std::{
 };
 
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(
+    version,
+    about = "Counts the occurrences of values in a specific CSV column."
+)]
 struct Args {
-    #[arg(short, long)]
+    /// Name of the CSV column to count unique values for
+    #[arg(
+        short,
+        long,
+        value_name = "COLUMN_NAME",
+        help = "Column name to count (case-sensitive)"
+    )]
     column: String,
 
-    #[arg(short, long)]
+    /// Path to the input CSV file
+    #[arg(
+        short,
+        long,
+        value_name = "FILE_PATH",
+        help = "Path to the input CSV file"
+    )]
     input: String,
 
-    #[arg(short, long)]
+    /// Optional path to write the result as CSV
+    ///
+    /// If not provided, results are printed to stdout.
+    #[arg(
+        short,
+        long,
+        value_name = "OUTPUT_PATH",
+        help = "Path to output file (optional)"
+    )]
     output: Option<String>,
 }
 
