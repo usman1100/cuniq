@@ -43,7 +43,7 @@ fn main() {
         panic!("{}", "CSV file must contain headers")
     }
 
-    let mut counter: HashMap<String, i128> = HashMap::new();
+    let mut counter: HashMap<String, u32> = HashMap::new();
 
     for line in lines {
         let cells_string = match line {
