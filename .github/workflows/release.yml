@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build for ${{ matrix.target }}
+    name: Build for ${{ matrix.label }}
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -38,12 +38,20 @@ jobs:
       - name: Build release binary
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Prepare artifact
+      - name: Prepare artifact (Linux/macOS)
+        if: matrix.os != 'windows-latest'
         run: |
           mkdir -p dist
           cp target/${{ matrix.target }}/release/cuniq${{ matrix.ext }} dist/
           cd dist
           zip cuniq-${{ matrix.label }}.zip cuniq${{ matrix.ext }}
+
+      - name: Prepare artifact (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          mkdir dist
+          Copy-Item "target/${{ matrix.target }}/release/cuniq${{ matrix.ext }}" -Destination "dist/"
+          Compress-Archive -Path "dist/cuniq${{ matrix.ext }}" -DestinationPath "dist/cuniq-${{ matrix.label }}.zip"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
