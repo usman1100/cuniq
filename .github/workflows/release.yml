@@ -1,126 +1,76 @@
-name: Build and Release
+name: Build and Release (main branch)
 
 on:
   push:
-    tags:
-      - "v*" # Triggers on version tags like v1.0.0
-  workflow_dispatch: # Allows manual triggering
-
-permissions:
-  contents: write
+    branches:
+      - main # Run on every push to the main branch
 
 jobs:
   build:
-    name: Build ${{ matrix.target }}
+    name: Build for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
+
     strategy:
-      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact_name: cuniq
-            asset_name: cuniq-linux-x86_64
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-gnu
-            artifact_name: cuniq
-            asset_name: cuniq-linux-aarch64
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            artifact_name: cuniq.exe
-            asset_name: cuniq-windows-x86_64.exe
+            ext: ""
+            label: linux
           - os: macos-latest
             target: x86_64-apple-darwin
-            artifact_name: cuniq
-            asset_name: cuniq-macos-x86_64
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            artifact_name: cuniq
-            asset_name: cuniq-macos-aarch64
+            ext: ""
+            label: macos
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            ext: ".exe"
+            label: windows
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Rust
+      - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
-      - name: Install cross-compilation tools (Linux ARM)
-        if: matrix.target == 'aarch64-unknown-linux-gnu'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Build
+      - name: Build release binary
         run: cargo build --release --target ${{ matrix.target }}
-        env:
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
-      - name: Strip binary (Linux and macOS)
-        if: matrix.os != 'windows-latest'
-        run: strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+      - name: Prepare artifact
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/cuniq${{ matrix.ext }} dist/
+          cd dist
+          zip cuniq-${{ matrix.label }}.zip cuniq${{ matrix.ext }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.asset_name }}
-          path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+          name: cuniq-${{ matrix.label }}
+          path: dist/cuniq-${{ matrix.label }}.zip
 
   release:
-    name: Create Release
+    name: Update "Latest" GitHub Release
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download all artifacts
+      - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ./artifacts
+          path: dist
 
-      - name: Display structure of downloaded files
-        run: ls -R ./artifacts
+      - name: Display downloaded files
+        run: ls -R dist
 
-      - name: Prepare release assets
-        run: |
-          mkdir -p release
-          for dir in ./artifacts/*/; do
-            artifact_name=$(basename "$dir")
-            file=$(find "$dir" -type f)
-            if [ -n "$file" ]; then
-              cp "$file" "release/$artifact_name"
-              chmod +x "release/$artifact_name"
-            fi
-          done
-          ls -lh release/
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - name: Create or update release
+        uses: softprops/action-gh-release@v2
         with:
-          files: release/*
+          tag_name: latest
+          name: "Latest Build"
           draft: false
-          prerelease: false
-          generate_release_notes: true
+          prerelease: true
+          files: dist/**/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
