@@ -2,7 +2,7 @@ use clap::Parser;
 use std::{
     collections::HashMap,
     fs::File,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, Write},
     process::exit,
 };
 
@@ -14,11 +14,39 @@ struct Args {
 
     #[arg(short, long)]
     input: String,
+
+    #[arg(short, long)]
+    output: Option<String>,
 }
 
 fn print_counter(counter: HashMap<String, u32>) -> () {
     for (key, value) in counter {
         println!("{},{}", key, value)
+    }
+}
+
+fn write_count_to_output(path: String, counter: HashMap<String, u32>, column: String) -> () {
+    let mut file = match File::create(path) {
+        Ok(data) => data,
+        Err(err) => {
+            eprintln!("{}", err);
+            exit(1);
+        }
+    };
+
+    match file.write(format!("{},count\n", column).as_bytes()) {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("Error printing line. {}", e);
+            exit(1);
+        }
+    }
+
+    for (key, value) in counter {
+        match file.write(format!("{},{}\n", key, value).as_bytes()) {
+            Ok(_) => continue,
+            Err(e) => eprintln!("Error printing line. {}", e),
+        }
     }
 }
 
@@ -77,6 +105,12 @@ fn main() {
                 .or_insert(1);
         }
     }
-    println!("{},count", column);
-    print_counter(counter);
+
+    match args.output {
+        Some(data) => write_count_to_output(data, counter, column),
+        None => {
+            println!("{},count", column);
+            print_counter(counter);
+        }
+    }
 }
