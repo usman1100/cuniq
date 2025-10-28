@@ -5,6 +5,10 @@ on:
     branches:
       - main # Run on every push to the main branch
 
+permissions:
+  contents: write
+  actions: read
+
 jobs:
   build:
     name: Build for ${{ matrix.label }}
@@ -79,6 +83,7 @@ jobs:
           name: "Latest Build"
           draft: false
           prerelease: true
+          overwrite: true
           files: dist/**/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
