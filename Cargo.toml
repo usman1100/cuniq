@@ -2,6 +2,12 @@
 name = "cuniq"
 version = "0.1.0"
 edition = "2024"
+authors = ["Usman Ahmed usmanahmed1100@gmail.com"]
+description = "Fast, header-aware `uniq -c` for CSV columns."
+license = "MIT"
+repository = "https://github.com/usman1100/cuniq"
+homepage = "https://github.com/usman1100/cuniq"
+documentation = "https://github.com/usman1100/cuniq"
 
 [dependencies]
 clap = { version = "4.5.50", features = ["derive"] }
