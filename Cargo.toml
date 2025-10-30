@@ -1,6 +1,6 @@
 [package]
 name = "cuniq"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Usman Ahmed usmanahmed1100@gmail.com"]
 description = "Fast, header-aware `uniq -c` for CSV columns."
